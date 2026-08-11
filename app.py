@@ -84,7 +84,17 @@ st.metric('Supplier B break-even price',f'€{breakeven:.2f}')
 st.metric('Required discount',f'€{discount:.2f}')
 
 chart=pd.DataFrame({'Supplier':['A','B'],'Profit/h':[ra['Profit/h'],rb['Profit/h']]})
-st.plotly_chart(px.bar(chart,x='Supplier',y='Profit/h',title='Profit per Hour'),use_container_width=True)
+chart = pd.DataFrame(
+    {
+        "Profit €/h": [
+            result_a["Profit €/h"],
+            result_b["Profit €/h"]
+        ]
+    },
+    index=["Supplier A", "Supplier B"]
+)
+
+st.bar_chart(chart)
 
 st.subheader('Sensitivity Analysis')
 rows=[]
