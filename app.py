@@ -1,135 +1,140 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
 
 st.set_page_config(
-    page_title="Supplier Profit Calculator",
+    page_title="Supplier Comparison Calculator",
     layout="wide"
 )
 
-# --------------------------------------------------
-# TITLE
-# --------------------------------------------------
-
 st.title("Supplier Quality & Profitability Calculator")
 
-# --------------------------------------------------
-# SIDEBAR
-# --------------------------------------------------
+# =====================================================
+# GLOBAL SETTINGS
+# =====================================================
 
 st.sidebar.header("Production")
 
 thickness = st.sidebar.number_input(
     "Thickness (mm)",
+    min_value=0.0,
     value=19.0
 )
 
-input_width = st.sidebar.number_input(
+width = st.sidebar.number_input(
     "Input Width (mm)",
+    min_value=0.0,
     value=75.0
 )
 
 saws = st.sidebar.number_input(
     "Number of Saws",
-    value=2,
-    step=1
+    min_value=1,
+    value=2
 )
 
 shifts = st.sidebar.number_input(
-    "Shifts",
-    value=2,
-    step=1
+    "Number of Shifts",
+    min_value=1,
+    value=2
 )
 
 hours_per_shift = st.sidebar.number_input(
     "Hours per Shift per Month",
+    min_value=1,
     value=160
 )
 
-# --------------------------------------------------
+# =====================================================
 # LABOUR
-# --------------------------------------------------
+# =====================================================
 
-st.sidebar.header("Labour")
+st.sidebar.header("Labour Costs")
 
 operators = st.sidebar.number_input(
     "Operators",
+    min_value=0,
     value=3
 )
 
 operator_salary = st.sidebar.number_input(
     "Operator Salary €/month",
-    value=1800
+    min_value=0.0,
+    value=1800.0
 )
 
 forklift_drivers = st.sidebar.number_input(
     "Forklift Drivers",
+    min_value=0,
     value=1
 )
 
 forklift_salary = st.sidebar.number_input(
-    "Forklift Salary €/month",
-    value=1500
+    "Forklift Driver Salary €/month",
+    min_value=0.0,
+    value=1500.0
 )
 
 workers = st.sidebar.number_input(
-    "Workers",
+    "Additional Workers",
+    min_value=0,
     value=1
 )
 
 worker_salary = st.sidebar.number_input(
     "Worker Salary €/month",
-    value=1500
+    min_value=0.0,
+    value=1500.0
 )
 
-# --------------------------------------------------
+# =====================================================
 # MACHINE COSTS
-# --------------------------------------------------
+# =====================================================
 
-st.sidebar.header("Monthly Machine Costs")
+st.sidebar.header("Machine Costs €/month")
 
 electricity = st.sidebar.number_input(
     "Electricity",
-    value=0
+    min_value=0.0,
+    value=0.0
 )
 
 maintenance = st.sidebar.number_input(
     "Maintenance",
-    value=0
+    min_value=0.0,
+    value=0.0
 )
 
 blades = st.sidebar.number_input(
     "Saw Blades",
-    value=0
+    min_value=0.0,
+    value=0.0
 )
 
-overhead = st.sidebar.number_input(
+other_costs = st.sidebar.number_input(
     "Other Costs",
-    value=0
+    min_value=0.0,
+    value=0.0
 )
 
-# --------------------------------------------------
+# =====================================================
 # SELLING PRICES
-# --------------------------------------------------
+# =====================================================
 
-st.header("Selling Prices €/m³")
+st.header("Selling Prices (€/m³)")
 
-c1, c2, c3, c4 = st.columns(4)
+p1, p2, p3 = st.columns(3)
 
-with c1:
-    q1_price = st.number_input("Q1", value=650.0)
-    q1s_price = st.number_input("Q1 Short", value=500.0)
+with p1:
+    q1_price = st.number_input("Q1 Price", value=0.0)
+    q1s_price = st.number_input("Q1 Short Price", value=0.0)
 
-with c2:
-    q2_price = st.number_input("Q2", value=400.0)
-    q3_price = st.number_input("Q3", value=250.0)
+with p2:
+    q2_price = st.number_input("Q2 Price", value=0.0)
+    q3_price = st.number_input("Q3 Price", value=0.0)
 
-with c3:
-    q4_price = st.number_input("Q4", value=120.0)
-    q5_price = st.number_input("Q5", value=700.0)
-
-with c4:
-    waste_price = st.number_input("Waste", value=0.0)
+with p3:
+    q4_price = st.number_input("Q4 Price", value=0.0)
+    q5_price = st.number_input("Q5 Price", value=0.0)
 
 PRICE_MAP = {
     "Q1": q1_price,
@@ -137,29 +142,28 @@ PRICE_MAP = {
     "Q2": q2_price,
     "Q3": q3_price,
     "Q4": q4_price,
-    "Q5": q5_price,
-    "WASTE": waste_price
+    "Q5": q5_price
 }
 
 # Q3 = 61 mm
 # Q4 = 50 mm
+
 WIDTH_FACTOR = {
-    "Q1": 75 / 75,
-    "Q1S": 75 / 75,
-    "Q2": 75 / 75,
+    "Q1": 1.0,
+    "Q1S": 1.0,
+    "Q2": 1.0,
     "Q3": 61 / 75,
     "Q4": 50 / 75,
-    "Q5": 75 / 75,
-    "WASTE": 0
+    "Q5": 1.0
 }
 
-# --------------------------------------------------
-# SUPPLIER INPUTS
-# --------------------------------------------------
+# =====================================================
+# SUPPLIER INPUT
+# =====================================================
 
 left, right = st.columns(2)
 
-def supplier_form(container, supplier_name):
+def supplier_input(container, supplier_name):
 
     with container:
 
@@ -167,89 +171,95 @@ def supplier_form(container, supplier_name):
 
         purchase_price = st.number_input(
             f"{supplier_name} Purchase Price €/m³",
-            value=235.0,
-            key=f"price_{supplier_name}"
+            min_value=0.0,
+            value=0.0,
+            key=f"{supplier_name}_price"
         )
 
         speed = st.number_input(
-            f"{supplier_name} Speed m/min",
-            value=38.5 if supplier_name == "Supplier A" else 34.0,
-            key=f"speed_{supplier_name}"
+            f"{supplier_name} Speed (m/min)",
+            min_value=0.0,
+            value=0.0,
+            key=f"{supplier_name}_speed"
         )
 
         downtime = st.number_input(
             f"{supplier_name} Downtime %",
-            value=5.0,
-            key=f"downtime_{supplier_name}"
+            min_value=0.0,
+            max_value=100.0,
+            value=0.0,
+            key=f"{supplier_name}_downtime"
         )
-
-        st.write("Quality Distribution %")
 
         q1 = st.number_input(
             f"{supplier_name} Q1 %",
-            value=66.0 if supplier_name == "Supplier A" else 57.0,
-            key=f"q1_{supplier_name}"
+            value=0.0,
+            key=f"{supplier_name}_q1"
         )
 
         q1s = st.number_input(
             f"{supplier_name} Q1 Short %",
-            value=8.0,
-            key=f"q1s_{supplier_name}"
+            value=0.0,
+            key=f"{supplier_name}_q1s"
         )
 
         q2 = st.number_input(
             f"{supplier_name} Q2 %",
-            value=10.0,
-            key=f"q2_{supplier_name}"
+            value=0.0,
+            key=f"{supplier_name}_q2"
         )
 
         q3 = st.number_input(
             f"{supplier_name} Q3 %",
-            value=6.0,
-            key=f"q3_{supplier_name}"
+            value=0.0,
+            key=f"{supplier_name}_q3"
         )
 
         q4 = st.number_input(
             f"{supplier_name} Q4 %",
-            value=4.0,
-            key=f"q4_{supplier_name}"
+            value=0.0,
+            key=f"{supplier_name}_q4"
         )
 
         q5 = st.number_input(
             f"{supplier_name} Q5 %",
-            value=3.0,
-            key=f"q5_{supplier_name}"
+            value=0.0,
+            key=f"{supplier_name}_q5"
         )
 
-        waste = st.number_input(
-            f"{supplier_name} Waste %",
-            value=3.0,
-            key=f"waste_{supplier_name}"
+        total_quality = q1 + q1s + q2 + q3 + q4 + q5
+
+        waste = max(0, 100 - total_quality)
+
+        st.metric(
+            "Calculated Waste %",
+            f"{waste:.2f}"
         )
 
-        mix = {
-            "Q1": q1,
-            "Q1S": q1s,
-            "Q2": q2,
-            "Q3": q3,
-            "Q4": q4,
-            "Q5": q5,
-            "WASTE": waste
-        }
+        if total_quality > 100:
+            st.error("Quality percentages exceed 100%")
 
         return {
             "purchase": purchase_price,
             "speed": speed,
             "downtime": downtime,
-            "mix": mix
+            "quality": {
+                "Q1": q1,
+                "Q1S": q1s,
+                "Q2": q2,
+                "Q3": q3,
+                "Q4": q4,
+                "Q5": q5
+            },
+            "waste": waste
         }
 
-supplier_a = supplier_form(left, "Supplier A")
-supplier_b = supplier_form(right, "Supplier B")
+supplier_a = supplier_input(left, "Supplier A")
+supplier_b = supplier_input(right, "Supplier B")
 
-# --------------------------------------------------
+# =====================================================
 # COSTS
-# --------------------------------------------------
+# =====================================================
 
 production_hours = shifts * hours_per_shift
 
@@ -265,46 +275,127 @@ machine_hour = (
     electricity
     + maintenance
     + blades
-    + overhead
+    + other_costs
 ) / production_hours
 
-# --------------------------------------------------
-# CALCULATION
-# --------------------------------------------------
+# =====================================================
+# CALC ENGINE
+# =====================================================
 
-def calculate_supplier(data):
+def calculate(data):
 
     speed = data["speed"]
-    downtime = data["downtime"]
     purchase = data["purchase"]
-    mix = data["mix"]
+    downtime = data["downtime"]
+    quality = data["quality"]
 
     effective_speed = speed * (1 - downtime / 100)
 
-    running_meters_hour = effective_speed * saws * 60
+    lm_hour = effective_speed * saws * 60
 
     input_m3_hour = (
         (thickness / 1000)
-        * (input_width / 1000)
-        * running_meters_hour
+        * (width / 1000)
+        * lm_hour
     )
 
-    revenue_per_input_m3 = 0
-    recovered_percent = 0
+    revenue_per_m3 = 0
+    recovered_volume = 0
 
-    for quality, pct in mix.items():
+    for q in quality:
 
-        share = pct / 100
+        share = quality[q] / 100
 
-        factor = WIDTH_FACTOR[quality]
+        factor = WIDTH_FACTOR[q]
 
-        sellable_volume = share * factor
+        recovered_volume += share * factor
 
-        recovered_percent += sellable_volume
-
-        revenue_per_input_m3 += (
-            sellable_volume
-            * PRICE_MAP[quality]
+        revenue_per_m3 += (
+            share
+            * factor
+            * PRICE_MAP[q]
         )
 
-    
+    revenue_hour = revenue_per_m3 * input_m3_hour
+
+    material_hour = purchase * input_m3_hour
+
+    profit_hour = (
+        revenue_hour
+        - material_hour
+        - labour_hour
+        - machine_hour
+    )
+
+    annual_profit = profit_hour * production_hours * 12
+
+    return {
+        "Input m³/h": round(input_m3_hour, 2),
+        "Recovered %": round(recovered_volume * 100, 2),
+        "Revenue €/m³": round(revenue_per_m3, 2),
+        "Revenue €/h": round(revenue_hour, 2),
+        "Profit €/h": round(profit_hour, 2),
+        "Annual Profit €": round(annual_profit, 2)
+    }
+
+result_a = calculate(supplier_a)
+result_b = calculate(supplier_b)
+
+# =====================================================
+# RESULTS
+# =====================================================
+
+st.header("Results")
+
+results = pd.DataFrame(
+    {
+        "Supplier A": result_a,
+        "Supplier B": result_b
+    }
+)
+
+st.dataframe(results, use_container_width=True)
+
+# =====================================================
+# PROFIT DIFFERENCE
+# =====================================================
+
+st.header("Comparison")
+
+profit_difference = (
+    result_a["Profit €/h"]
+    - result_b["Profit €/h"]
+)
+
+annual_difference = (
+    result_a["Annual Profit €"]
+    - result_b["Annual Profit €"]
+)
+
+c1, c2 = st.columns(2)
+
+c1.metric(
+    "Profit Difference €/hour",
+    f"{profit_difference:,.2f}"
+)
+
+c2.metric(
+    "Annual Difference €",
+    f"{annual_difference:,.0f}"
+)
+
+# =====================================================
+# CHART
+# =====================================================
+
+chart_df = pd.DataFrame(
+    {
+        "Profit €/h": [
+            result_a["Profit €/h"],
+            result_b["Profit €/h"]
+        ]
+    },
+    index=["Supplier A", "Supplier B"]
+)
+
+st.bar_chart(chart_df)
