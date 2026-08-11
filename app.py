@@ -177,4 +177,82 @@ def calculate(data):
     )
 
     if input_m3_hour > 0:
-        hours_needed = input_
+        hours_needed = input_needed / input_m3_hour
+    else:
+        hours_needed = 0
+
+    labour_cost = hours_needed * line_cost_hour
+
+    material_cost = input_needed * data["price"]
+
+    total_cost = labour_cost + material_cost
+
+    return {
+        "Input Needed m³": round(input_needed, 1),
+        "Q1 m³": round(q1_volume, 1),
+        "Q1 Short m³": round(q1s_volume, 1),
+        "Q2 m³": round(q2_volume, 1),
+        "Q3 m³": round(q3_volume, 1),
+        "Q4 m³": round(q4_volume, 1),
+        "Q5 m³": round(q5_volume, 1),
+        "Waste m³": round(true_waste, 1),
+        "Hours Needed": round(hours_needed, 1),
+        "Labour Cost €": round(labour_cost, 0),
+        "Material Cost €": round(material_cost, 0),
+        "Total Cost €": round(total_cost, 0),
+    }
+
+
+result_a = calculate(supplier_a)
+result_b = calculate(supplier_b)
+
+# -----------------------------
+# RESULTS
+# -----------------------------
+
+if result_a and result_b:
+
+    st.header("Results")
+
+    df = pd.DataFrame({
+        "Supplier A": result_a,
+        "Supplier B": result_b
+    })
+
+    st.dataframe(df, use_container_width=True)
+
+    st.header("Comparison")
+
+    extra_hours = (
+        result_b["Hours Needed"]
+        - result_a["Hours Needed"]
+    )
+
+    extra_cost = (
+        result_b["Total Cost €"]
+        - result_a["Total Cost €"]
+    )
+
+    c1, c2 = st.columns(2)
+
+    c1.metric(
+        "Extra Hours B vs A",
+        f"{extra_hours:.1f}"
+    )
+
+    c2.metric(
+        "Extra Cost B vs A (€)",
+        f"{extra_cost:,.0f}"
+    )
+
+    chart = pd.DataFrame(
+        {
+            "Hours Needed": [
+                result_a["Hours Needed"],
+                result_b["Hours Needed"]
+            ]
+        },
+        index=["Supplier A", "Supplier B"]
+    )
+
+    st.bar_chart(chart)
