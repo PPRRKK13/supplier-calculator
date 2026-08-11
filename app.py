@@ -127,26 +127,30 @@ def calculate(data):
         return None
 
     # Input volume needed
-    input_needed = target_q1 / q1_fraction
+   # Volumes produced from input
 
-    # Volumes produced from that input
-    q1_volume = input_needed * data["q1"] / 100
-    q1s_volume = input_needed * data["q1s"] / 100
-    q2["q1s_volume = input_needed * data[ / 100
+q1_volume = input_needed * data["q1"] / 100
 
-    q3_volume = (
-        input_needed
-        * data["q3"] / 100
-        * (61 / 75)
-    )
+q1s_volume = input_needed * data["q1s"] / 100
 
-    q4_volume = (
-        input_needed
-        * data["q4"] / 100
-        * (50 / 75)
-    )
+q2_volume = input_needed * data["q2"] / 100
 
-    q5_volume = input_needed * data["q5"] / 100
+q3_volume = (
+    input_needed
+    * data["q3"] / 100
+    * (61 / 75)
+)
+
+q4_volume = (
+    input_needed
+    * data["q4"] / 100
+    * (50 / 75)
+)
+
+q5_volume = (
+    input_needed
+    * data["q5"] / 100
+)
 
     total_sellable = (
         q1_volume
