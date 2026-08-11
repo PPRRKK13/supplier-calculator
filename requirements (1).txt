@@ -1,5 +1,7 @@
 streamlit
 pandas
-plotly
 openpyxl
 numpy
+git add .
+git commit -m "Full calculator"
+git push
