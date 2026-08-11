@@ -1,7 +1,3 @@
 streamlit
 pandas
-openpyxl
-numpy
-git add .
-git commit -m "Full calculator"
-git push
+
